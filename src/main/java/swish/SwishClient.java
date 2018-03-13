@@ -1,9 +1,11 @@
 package swish;
 
+import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -28,9 +30,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 public class SwishClient {
-	private final String CACERT_PATH = "/home/parkado/certificates/Swish/truststore.jks";
+	private final String CACERT_PATH = "C:/SwishCert/Testcertifikat/PKCS12/truststore.jks";//"/home/parkado/certificates/Swish/truststore.jks";
 	private final String CACERT_PASS = "test";
-	private final String CERT_PATH = "/home/parkado/certificates/Swish/1231181189.p12";
+	private final String CERT_PATH = "C:/SwishCert/Testcertifikat/PKCS12/1231181189.p12";//"/home/parkado/certificates/Swish/1231181189.p12";
 	private final String CERT_PASS = "swish";
 	
 	private final String URL_PRODUCTION = "https://swicpc.bankgirot.se/swish-cpcapi/api/v1/paymentrequests/";
@@ -82,8 +84,8 @@ public class SwishClient {
 	 * @throws SwishException
 	 */
 	@SuppressWarnings("restriction")
-	public String sendPaymentRequest(PaymentRequest request) throws SwishException {
-		String response = "";
+	public SwishResponseHeaders sendPaymentRequest(PaymentRequest request) throws SwishException {
+		SwishResponseHeaders responseHeaders = null;
 		URL url;
 		try {
 			url = new URL(null, getUrl(), new sun.net.www.protocol.https.Handler());
@@ -95,24 +97,35 @@ public class SwishClient {
 			addBodyToConnection(conn, paymentRequestJson);
 			int responseCode = conn.getResponseCode();
 			System.out.println(responseCode);
-			if (responseCode ==  HttpsURLConnection.HTTP_CREATED) { // HTTP_CREATED=201 means that swish has accepted the request
-			    // The "location" parameter is found in headings
-				Map<String, List<String>> hdrs = conn.getHeaderFields();
-				response += hdrs.get("Location");	
-				HttpsURLConnection.setDefaultSSLSocketFactory(defaultSocketFactory);			
+			if (responseCode ==  HttpsURLConnection.HTTP_CREATED) {
+			    responseHeaders = getResponseHeaders(conn);		
 			} else {
 				InputStream stream = conn.getErrorStream();
 				String errorString = new Scanner(stream,"UTF-8").useDelimiter("\\A").next();
 				HttpsURLConnection.setDefaultSSLSocketFactory(defaultSocketFactory);	
 				throw new SwishException(errorString);
 			}
+			HttpsURLConnection.setDefaultSSLSocketFactory(defaultSocketFactory);
 			conn.disconnect();
-			return response.replaceAll("[\\[\\]]", "");
+			return responseHeaders;
 		} catch (Exception e) {
 			throw new SwishException("", e);
 		}
 	}
 	
+	SwishResponseHeaders getResponseHeaders(HttpsURLConnection conn) {
+		Map<String, List<String>> hdrs = conn.getHeaderFields();
+		String location = hdrs.get("Location").get(0);
+		String requestToken = null;
+		if(hdrs.get("PaymentRequestToken") != null)
+			requestToken = hdrs.get("PaymentRequestToken").get(0);
+		return new SwishResponseHeaders(location, requestToken);
+	}
+	
+	/**
+	 * Get Swish api URL
+	 * @return either test or production URL depending on if this object is in test mode or not.
+	 */
 	String getUrl() {
 		String url = test ? URL_TEST : URL_PRODUCTION;
 		return url;
@@ -122,23 +135,18 @@ public class SwishClient {
 	 * @param url url, used to check payment status
 	 * @return Payment response containing status an payment information.
 	 */
-	public PaymentResponse checkPaymentStatus(String url) throws SwishException, MalformedURLException {
+	public SwishPayment checkPaymentStatus(String url) throws SwishException, MalformedURLException {
 		return checkPaymentStatus(new URL(url));
 	}
 	
-	public PaymentResponse checkPaymentStatus(URL url) throws SwishException {
+	public SwishPayment checkPaymentStatus(URL url) throws SwishException {
 		SSLSocketFactory defaultSocketFactory = HttpsURLConnection.getDefaultSSLSocketFactory();
 		try {
 			HttpsURLConnection.setDefaultSSLSocketFactory(getSSLContext().getSocketFactory());
 			HttpsURLConnection conn = openConnection(url, "GET");
-			InputStream stream = conn.getInputStream();
-			System.out.println(conn.getResponseCode());
-		    Scanner scanner = new Scanner(stream, StandardCharsets.UTF_8.name());
-		    String out = scanner.useDelimiter("\\A").next();
-		    scanner.close();
-			System.out.println(out);
+			String body = getBodyFromConnection(conn);
 			HttpsURLConnection.setDefaultSSLSocketFactory(defaultSocketFactory);	
-			return gson.fromJson(out, PaymentResponse.class);
+			return gson.fromJson(body, SwishPayment.class);
 		} catch (Exception e) {
 			HttpsURLConnection.setDefaultSSLSocketFactory(defaultSocketFactory);
 			throw new SwishException("", e);
@@ -168,5 +176,21 @@ public class SwishClient {
 		wr.write(body);
 		wr.flush();
 		wr.close();
+	}
+	
+	String getBodyFromConnection(HttpsURLConnection conn) throws IOException {
+		if(conn.getResponseCode() / 100 != 2)
+			return null;
+		InputStream stream = conn.getInputStream();
+		InputStreamReader streamReader = new InputStreamReader(stream);
+		BufferedReader reader = new BufferedReader(streamReader);
+		StringBuilder response = new StringBuilder();
+	    String currentLine;
+
+	    while ((currentLine = reader.readLine()) != null) 
+	        response.append(currentLine);
+
+	    reader.close();
+	    return response.toString();
 	}
 }

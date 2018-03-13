@@ -57,7 +57,7 @@ public class PaymentRequest {
 	/**
 	 * Merchant supplied message about the
 	 * payment/order. Max 50 chars. Allowed
-	 * characters are the letters a-o¨, A-Ö, the
+	 * characters are the letters a-ö, A-Ö, the
 	 * numbers
 	 * 0-9 and the special characters :;.,?!()”.
 	 * For MSS, errorCode as defined in section 0

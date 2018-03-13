@@ -4,48 +4,50 @@ import java.net.URL;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import junit.framework.Assert;
 import swish.PaymentRequest;
 import swish.SwishClient;
 import swish.SwishException;
+import swish.SwishPayment;
+import swish.SwishResponseHeaders;
 
 public class TestSwish {
-	@Ignore
+	private static final int E_COMMERCE = 0;
+	private static final int M_COMMERCE = 1;
+	
 	@Test
-	public void testSwish() throws Exception {
-		String[] args = {
-				"1",
-				"https://mss.swicpc.bankgirot.se/swish-cpcapi/api/v1/paymentrequests/",
-				"C:/SwishCert/Testcertifikat/PKCS12/truststore.jks",
-				"test",
-				"C:/SwishCert/Testcertifikat/PKCS12/1231181189.p12",
-				"swish",
-				"0123456789",
-				"https://example.com/api/swishcb/paymentrequests",
-				"46731930431",
-				"1231181189",
-				"100",
-				"SEK",
-				"TESTING",
-				"123"
-		};
-		Swish.main(args);
+	public void testPaymentRequestECommerce() throws SwishException, MalformedURLException {
+		System.out.println("TESTING E-COMMERCE");
+		SwishClient client = new SwishClient(true);
+		SwishResponseHeaders response = client.sendPaymentRequest(getTestRequest(E_COMMERCE));
+		System.out.println(response.getLocation());
+		testCheckStatus(response.getLocation());
 	}
 	
 	@Test
-	public void testPaymentRequest() throws SwishException, MalformedURLException {
+	public void testPaymentRequestMCommerce() throws SwishException, MalformedURLException {
+		System.out.println("TESTING M-COMMERCE");
 		SwishClient client = new SwishClient(true);
+		SwishResponseHeaders response = client.sendPaymentRequest(getTestRequest(M_COMMERCE));
+		System.out.println(response.getLocation());
+		System.out.println(response.getPaymentRequestToken());
+		testCheckStatus(response.getLocation());
+	}
+	
+	void testCheckStatus(String url) throws SwishException, MalformedURLException {
+		SwishClient client = new SwishClient(true);
+		SwishPayment payment = client.checkPaymentStatus(new URL(url));
+		System.out.println("Status: " + payment.getStatus());
+		Assert.assertNotSame("ERROR", payment.getStatus());
+	}
+	
+	PaymentRequest getTestRequest(int type) {
 		PaymentRequest request = new PaymentRequest();
 		request.setCallbackUrl("https://services.notima.se/parkado-rest/ws/payment/swish-callback");
 		request.setPayeeAlias("1231181189");
-		request.setPayerAlias("46731930431");
+		if(type == E_COMMERCE)
+			request.setPayerAlias("46731930431");
 		request.setAmount("100");
-		String response = client.sendPaymentRequest(request);
-		System.out.println(response);
-		testCheckStatus(response);
-	}
-	
-	public void testCheckStatus(String url) throws SwishException, MalformedURLException {
-		SwishClient client = new SwishClient(true);
-		client.checkPaymentStatus(new URL(url));
+		return request;
 	}
 }

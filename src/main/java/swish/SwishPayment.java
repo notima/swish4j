@@ -2,7 +2,7 @@ package swish;
 
 import java.util.Date;
 
-public class PaymentResponse extends PaymentRequest {
+public class SwishPayment extends PaymentRequest {
 	public static final String CREATED = "CREATED";
 	public static final String PAID = "PAID";
 	public static final String DECLINED = "DECLINED";
