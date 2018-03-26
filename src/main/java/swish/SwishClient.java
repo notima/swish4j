@@ -92,11 +92,9 @@ public class SwishClient {
 			SSLSocketFactory defaultSocketFactory = HttpsURLConnection.getDefaultSSLSocketFactory();
 			HttpsURLConnection.setDefaultSSLSocketFactory(getSSLContext().getSocketFactory());
 			String paymentRequestJson = gson.toJson(request);
-			System.out.println(paymentRequestJson);
 			HttpsURLConnection conn = openConnection(url, "POST");
 			addBodyToConnection(conn, paymentRequestJson);
 			int responseCode = conn.getResponseCode();
-			System.out.println(responseCode);
 			if (responseCode ==  HttpsURLConnection.HTTP_CREATED) {
 			    responseHeaders = getResponseHeaders(conn);		
 			} else {
@@ -109,7 +107,7 @@ public class SwishClient {
 			conn.disconnect();
 			return responseHeaders;
 		} catch (Exception e) {
-			throw new SwishException("", e);
+			throw new SwishException("Payment request failed", e);
 		}
 	}
 	
