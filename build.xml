@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<project name="Swish-client-library" default="install" basedir=".">
+    
+    <target name="install">
+        <exec dir="${basedir}" executable="mvn" failonerror="true">
+            <arg line="install"/>
+        </exec>
+    </target>
+
+</project>
