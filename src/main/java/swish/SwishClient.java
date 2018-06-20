@@ -18,6 +18,7 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Scanner;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -30,10 +31,22 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 public class SwishClient {
-	private final String CACERT_PATH = "C:/SwishCert/Testcertifikat/PKCS12/truststore.jks";//"/home/parkado/certificates/Swish/truststore.jks";
-	private final String CACERT_PASS = "test";
-	private final String CERT_PATH = "C:/SwishCert/Testcertifikat/PKCS12/1231181189.p12";//"/home/parkado/certificates/Swish/1231181189.p12";
-	private final String CERT_PASS = "swish";
+	/**
+	 * Path of the CA certificate
+	 */
+	private String cacertPath;
+	/**
+	 * CA certificate password
+	 */
+	private String cacertPass;
+	/**
+	 * Path of the Swish certificate
+	 */
+	private String certPath;
+	/**
+	 * certificate password
+	 */
+	private String certPass;
 	
 	private final String URL_PRODUCTION = "https://swicpc.bankgirot.se/swish-cpcapi/api/v1/paymentrequests/";
 	private final String URL_TEST = "https://mss.swicpc.bankgirot.se/swish-cpcapi/api/v1/paymentrequests/";
@@ -56,6 +69,7 @@ public class SwishClient {
 	public SwishClient(boolean test) throws SwishException {
 		this.test = test;
 		try {
+			loadProperties();
 			initKeyStores();
 		} catch (Exception e) {
 			throw new SwishException("", e);
@@ -63,15 +77,25 @@ public class SwishClient {
 		this.gson = new GsonBuilder().setPrettyPrinting().create();
 	}
 	
+	private void loadProperties() throws IOException {
+		Properties prop = new Properties();
+    	InputStream input = new FileInputStream("swish.properties");
+    	prop.load(input);
+    	cacertPath = prop.getProperty("cacertPath");
+    	cacertPass = prop.getProperty("cacertPass");
+    	certPath = prop.getProperty("certPath");
+    	certPass = prop.getProperty("certPass");
+	}
+
 	private void initKeyStores() throws UnrecoverableKeyException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, KeyStoreException, IOException {
 		keyStore = KeyStore.getInstance("pkcs12");
-		keyStore.load(new FileInputStream(CERT_PATH), CERT_PASS.toCharArray());
+		keyStore.load(new FileInputStream(certPath), certPass.toCharArray());
 		keyStoreManagerFactory = KeyManagerFactory.getInstance("SunX509");
-		keyStoreManagerFactory.init(keyStore, CERT_PASS.toCharArray());
+		keyStoreManagerFactory.init(keyStore, certPass.toCharArray());
 		
-		FileInputStream str = new FileInputStream(CACERT_PATH);
+		FileInputStream str = new FileInputStream(cacertPath);
 		trustStore = KeyStore.getInstance("JKS");
-		trustStore.load(str, CACERT_PASS.toCharArray());
+		trustStore.load(str, cacertPass.toCharArray());
 		trustStoreManagerFactory = TrustManagerFactory
 				.getInstance("SunX509");
 		trustStoreManagerFactory.init(trustStore);
