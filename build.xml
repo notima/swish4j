@@ -2,8 +2,8 @@
 <project name="Swish-client-library" default="install" basedir=".">
     
     <target name="install">
-        <exec dir="${basedir}" executable="mvn" failonerror="true">
-            <arg line="install"/>
+        <exec dir="${basedir}" executable="bash" failonerror="true">
+            <arg line="-c 'mvn install -DskipTests'"/>
         </exec>
     </target>
 
