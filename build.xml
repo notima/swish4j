@@ -3,7 +3,7 @@
     
     <target name="install">
         <exec dir="${basedir}" executable="bash" failonerror="true">
-            <arg line="-c 'mvn install -DskipTests'"/>
+            <arg line="-l -c 'mvn install -DskipTests'"/>
         </exec>
     </target>
 
