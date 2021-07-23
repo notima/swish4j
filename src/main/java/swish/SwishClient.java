@@ -9,7 +9,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -19,6 +18,7 @@ import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Random;
 import java.util.Scanner;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -30,72 +30,61 @@ import javax.net.ssl.TrustManagerFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-public class SwishClient {
-	/**
-	 * Path of the CA certificate
-	 */
-	private String cacertPath;
-	/**
-	 * CA certificate password
-	 */
-	private String cacertPass;
-	/**
-	 * Path of the Swish certificate
-	 */
-	private String certPath;
-	/**
-	 * certificate password
-	 */
-	private String certPass;
-	
-	private final String URL_PRODUCTION = "https://swicpc.bankgirot.se/swish-cpcapi/api/v1/paymentrequests/";
-	private final String URL_TEST = "https://mss.swicpc.bankgirot.se/swish-cpcapi/api/v1/paymentrequests/";
+public class SwishClient {	
+	private final String BASE_URL_PRODUCTION = "https://cpc.getswish.net/swish-cpcapi";
+	private final String BASE_URL_TEST = "https://mss.cpc.getswish.net/swish-cpcapi";
+	private final String URL_PAYMENTREQUESTS = "/api/v2/paymentrequests/";
 	
 	private boolean test = false;
 	private KeyStore keyStore;
+	private String keyStorePassword;
 	private KeyStore trustStore;
 	private KeyManagerFactory keyStoreManagerFactory;
 	private TrustManagerFactory trustStoreManagerFactory;
 	private Gson gson;
+
+	public static String generateInstructionUUID() {
+		Random r = new Random();
+        StringBuffer sb = new StringBuffer();
+        while(sb.length() < 32){
+            sb.append(Integer.toHexString(r.nextInt()));
+        }
+
+        return sb.toString().substring(0, 32).toUpperCase();
+	}
 	
-	public SwishClient() throws SwishException {
-		this(false);
+	public SwishClient(KeyStore keyStore, String keyStorePassword, KeyStore trustStore) throws SwishException, UnrecoverableKeyException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, KeyStoreException, IOException {
+		this(false, keyStore, keyStorePassword, trustStore);
 	}
 	
 	/**
 	 * @param test Whether or not the test url should be used.
 	 * @throws SwishException
+	 * @throws IOException
+	 * @throws KeyStoreException
+	 * @throws FileNotFoundException
+	 * @throws CertificateException
+	 * @throws NoSuchAlgorithmException
+	 * @throws UnrecoverableKeyException
 	 */
-	public SwishClient(boolean test) throws SwishException {
+	public SwishClient(boolean test, KeyStore keyStore, String keyStorePassword, KeyStore trustStore) throws SwishException, UnrecoverableKeyException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, KeyStoreException, IOException {
 		this.test = test;
-		try {
-			loadProperties();
-			initKeyStores();
-		} catch (Exception e) {
-			throw new SwishException("", e);
-		}
+		this.keyStore = keyStore;
+		this.keyStorePassword = keyStorePassword;
+		this.trustStore = trustStore;
 		this.gson = new GsonBuilder().setPrettyPrinting().create();
-	}
-	
-	private void loadProperties() throws IOException {
-		Properties prop = new Properties();
-    	InputStream input = new FileInputStream("swish.properties");
-    	prop.load(input);
-    	cacertPath = prop.getProperty("cacertPath");
-    	cacertPass = prop.getProperty("cacertPass");
-    	certPath = prop.getProperty("certPath");
-    	certPass = prop.getProperty("certPass");
+		initKeyStores();
 	}
 
 	private void initKeyStores() throws UnrecoverableKeyException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, KeyStoreException, IOException {
-		keyStore = KeyStore.getInstance("pkcs12");
-		keyStore.load(new FileInputStream(certPath), certPass.toCharArray());
+		/*keyStore = KeyStore.getInstance("pkcs12");
+		keyStore.load(new FileInputStream(certPath), certPass.toCharArray());*/
 		keyStoreManagerFactory = KeyManagerFactory.getInstance("SunX509");
-		keyStoreManagerFactory.init(keyStore, certPass.toCharArray());
+		keyStoreManagerFactory.init(keyStore, keyStorePassword.toCharArray());
 		
-		FileInputStream str = new FileInputStream(cacertPath);
+		/*FileInputStream str = new FileInputStream(cacertPath);
 		trustStore = KeyStore.getInstance("JKS");
-		trustStore.load(str, cacertPass.toCharArray());
+		trustStore.load(str, cacertPass.toCharArray());*/
 		trustStoreManagerFactory = TrustManagerFactory
 				.getInstance("SunX509");
 		trustStoreManagerFactory.init(trustStore);
@@ -108,24 +97,26 @@ public class SwishClient {
 	 * @throws SwishException
 	 */
 	@SuppressWarnings("restriction")
-	public SwishResponseHeaders sendPaymentRequest(PaymentRequest request) throws SwishException {
+	public SwishResponseHeaders sendPaymentRequest(PaymentRequest request, String instructionUUID) throws SwishException {
 		SwishResponseHeaders responseHeaders = null;
 		URL url;
 		try {
-			url = new URL(null, getUrl(), new sun.net.www.protocol.https.Handler());
+			url = new URL(null, getBaseUrl() + URL_PAYMENTREQUESTS + instructionUUID, new sun.net.www.protocol.https.Handler());
 			SSLSocketFactory defaultSocketFactory = HttpsURLConnection.getDefaultSSLSocketFactory();
 			HttpsURLConnection.setDefaultSSLSocketFactory(getSSLContext().getSocketFactory());
 			String paymentRequestJson = gson.toJson(request);
-			HttpsURLConnection conn = openConnection(url, "POST");
+			HttpsURLConnection conn = openConnection(url, "PUT");
 			addBodyToConnection(conn, paymentRequestJson);
 			int responseCode = conn.getResponseCode();
 			if (responseCode ==  HttpsURLConnection.HTTP_CREATED) {
 			    responseHeaders = getResponseHeaders(conn);		
 			} else {
 				InputStream stream = conn.getErrorStream();
-				String errorString = new Scanner(stream,"UTF-8").useDelimiter("\\A").next();
+				Scanner scanner = new Scanner(stream,"UTF-8");
+				String errorString = scanner.useDelimiter("\\A").next();
+				scanner.close();
 				HttpsURLConnection.setDefaultSSLSocketFactory(defaultSocketFactory);	
-				throw new SwishException(errorString);
+				throw new SwishException(String.format("Response from %s:\n%s", url.toString(), errorString));
 			}
 			HttpsURLConnection.setDefaultSSLSocketFactory(defaultSocketFactory);
 			conn.disconnect();
@@ -135,7 +126,7 @@ public class SwishClient {
 		}
 	}
 	
-	SwishResponseHeaders getResponseHeaders(HttpsURLConnection conn) {
+	private SwishResponseHeaders getResponseHeaders(HttpsURLConnection conn) {
 		Map<String, List<String>> hdrs = conn.getHeaderFields();
 		String location = hdrs.get("Location").get(0);
 		String requestToken = null;
@@ -148,8 +139,8 @@ public class SwishClient {
 	 * Get Swish api URL
 	 * @return either test or production URL depending on if this object is in test mode or not.
 	 */
-	String getUrl() {
-		String url = test ? URL_TEST : URL_PRODUCTION;
+	private String getBaseUrl() {
+		String url = test ? BASE_URL_TEST : BASE_URL_PRODUCTION;
 		return url;
 	}
 	
@@ -157,11 +148,11 @@ public class SwishClient {
 	 * @param url url, used to check payment status
 	 * @return Payment response containing status an payment information.
 	 */
-	public SwishPayment checkPaymentStatus(String url) throws SwishException, MalformedURLException {
-		return checkPaymentStatus(new URL(url));
+	public SwishPayment retrievePayment(String url) throws SwishException, MalformedURLException {
+		return retrievePayment(new URL(url));
 	}
 	
-	public SwishPayment checkPaymentStatus(URL url) throws SwishException {
+	public SwishPayment retrievePayment(URL url) throws SwishException {
 		SSLSocketFactory defaultSocketFactory = HttpsURLConnection.getDefaultSSLSocketFactory();
 		try {
 			HttpsURLConnection.setDefaultSSLSocketFactory(getSSLContext().getSocketFactory());
@@ -175,14 +166,14 @@ public class SwishClient {
 		}
 	}
 	
-	SSLContext getSSLContext() throws NoSuchAlgorithmException, KeyManagementException {
+	private SSLContext getSSLContext() throws NoSuchAlgorithmException, KeyManagementException {
 		SSLContext sslctx = SSLContext.getInstance("TLSv1.2");
 		sslctx.init(keyStoreManagerFactory.getKeyManagers(), 
 				trustStoreManagerFactory.getTrustManagers(), null);
 		return sslctx;
 	}
 	
-	HttpsURLConnection openConnection(URL url, String method) throws IOException {
+	private HttpsURLConnection openConnection(URL url, String method) throws IOException {
 		HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
 		conn.setDoOutput(true);
 		conn.setDoInput(true);
@@ -193,14 +184,14 @@ public class SwishClient {
 		return conn;
 	}
 	
-	void addBodyToConnection(HttpsURLConnection conn, String body) throws IOException {
+	private void addBodyToConnection(HttpsURLConnection conn, String body) throws IOException {
 		OutputStreamWriter wr= new OutputStreamWriter(conn.getOutputStream());
 		wr.write(body);
 		wr.flush();
 		wr.close();
 	}
 	
-	String getBodyFromConnection(HttpsURLConnection conn) throws IOException {
+	private String getBodyFromConnection(HttpsURLConnection conn) throws IOException {
 		if(conn.getResponseCode() / 100 != 2)
 			return null;
 		InputStream stream = conn.getInputStream();

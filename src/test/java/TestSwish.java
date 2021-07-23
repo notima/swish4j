@@ -1,10 +1,20 @@
-import java.net.MalformedURLException;
-import java.net.URL;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
 
-import org.junit.Ignore;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import org.junit.Test;
 
-import junit.framework.Assert;
 import swish.PaymentRequest;
 import swish.SwishClient;
 import swish.SwishException;
@@ -14,44 +24,53 @@ import swish.SwishResponseHeaders;
 public class TestSwish {
 	private static final int E_COMMERCE = 0;
 	private static final int M_COMMERCE = 1;
-	
-	private static final String TRANSACTION_DECLINED_ERROR = "RF07";
-	
+
+	private static final String CERTIFICATE_FILE = "Swish_Merchant_TestCertificate_1234679304.p12";
+	private static final String CA_CERTIFICATE_FILE = "Swish_TLS_RootCA.jks";
+
 	@Test
-	public void testPaymentRequestECommerce() throws SwishException, MalformedURLException {
-		System.out.println("\nTESTING E-COMMERCE");
-		SwishClient client = new SwishClient(true);
-		SwishResponseHeaders response = client.sendPaymentRequest(getTestRequest(E_COMMERCE));
-		System.out.println(response.getLocation());
-		testCheckStatus(response.getLocation());
+	public void testGetInstructionUUID(){
+		System.out.println("\nTEST CREATE INSTRUCTION UUID");
+		String uuid = SwishClient.generateInstructionUUID();
+		System.out.println(uuid);
+		assertEquals(32, uuid.length());
 	}
 	
 	@Test
-	public void testPaymentRequestMCommerce() throws SwishException, MalformedURLException {
+	public void testPaymentRequestECommerce() throws SwishException, UnrecoverableKeyException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, KeyStoreException, IOException {
+		System.out.println("\nTESTING E-COMMERCE");
+		SwishClient client = getTestClient();
+		SwishResponseHeaders response = client.sendPaymentRequest(getTestRequest(E_COMMERCE), SwishClient.generateInstructionUUID());
+		System.out.println(response.getLocation());
+		testCheckStatus(client, response.getLocation());
+	}
+	
+	@Test
+	public void testPaymentRequestMCommerce() throws SwishException, UnrecoverableKeyException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, KeyStoreException, IOException {
 		System.out.println("\nTESTING M-COMMERCE");
-		SwishClient client = new SwishClient(true);
-		SwishResponseHeaders response = client.sendPaymentRequest(getTestRequest(M_COMMERCE));
+		SwishClient client = getTestClient();
+		SwishResponseHeaders response = client.sendPaymentRequest(getTestRequest(M_COMMERCE), SwishClient.generateInstructionUUID());
 		System.out.println(response.getLocation());
 		System.out.println(response.getPaymentRequestToken());
-		testCheckStatus(response.getLocation());
+		testCheckStatus(client, response.getLocation());
 	}
 	
-	@Test
-	public void testDeclinedTransaction() throws MalformedURLException, SwishException {
-		System.out.println("\nTESTING DECLINED TRANSACTION");
-		SwishClient client = new SwishClient(true);
-		try {
-			SwishResponseHeaders response = client.sendPaymentRequest(getTestRequest(M_COMMERCE, TRANSACTION_DECLINED_ERROR));
-		} catch (SwishException e) {
-			System.out.println("Request failed succesfully!");
-		};
-	}
-	
-	void testCheckStatus(String url) throws SwishException, MalformedURLException {
-		SwishClient client = new SwishClient(true);
-		SwishPayment payment = client.checkPaymentStatus(new URL(url));
+	void testCheckStatus(SwishClient client, String url) throws SwishException, UnrecoverableKeyException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, KeyStoreException, IOException {
+		SwishPayment payment = client.retrievePayment(url);
 		System.out.println("Status: " + payment.getStatus());
-		Assert.assertNotSame("ERROR", payment.getStatus());
+		assertNotSame("ERROR", payment.getStatus());
+	}
+
+	SwishClient getTestClient() throws UnrecoverableKeyException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, KeyStoreException, SwishException, IOException {
+		InputStream certInputStream = this.getClass().getClassLoader().getResourceAsStream(CERTIFICATE_FILE);
+		KeyStore keyStore = KeyStore.getInstance("pkcs12");
+		keyStore.load(certInputStream, "swish".toCharArray());
+
+		InputStream str = this.getClass().getClassLoader().getResourceAsStream(CA_CERTIFICATE_FILE);
+		KeyStore trustStore = KeyStore.getInstance("JKS");
+		trustStore.load(str, "swish!".toCharArray());
+
+		return new SwishClient(true, keyStore, "swish", trustStore);
 	}
 	
 	PaymentRequest getTestRequest(int type) {
@@ -60,13 +79,17 @@ public class TestSwish {
 	
 	PaymentRequest getTestRequest(int type, String error) {
 		PaymentRequest request = new PaymentRequest();
-		request.setCallbackUrl("https://services.notima.se/broker-rest/ws/payment/swish/callback");
+		request.setCallbackUrl("https://myfakehost.se/swishcallback.cfm");
 		request.setPayeeAlias("1231181189");
 		if(type == E_COMMERCE)
 			request.setPayerAlias("46731930431");
 		request.setAmount("100");
 		if(error != null)
 			request.setMessage(error);
+
+		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		System.out.println("Body:\n" + gson.toJson(request));
+
 		return request;
 	}
 }

@@ -57,15 +57,42 @@ public class PaymentRequest {
 	/**
 	 * Merchant supplied message about the
 	 * payment/order. Max 50 chars. Allowed
-	 * characters are the letters a-ö, A-Ö, the
+	 * characters are the letters a-ï¿½, A-ï¿½, the
 	 * numbers
-	 * 0-9 and the special characters :;.,?!()”.
+	 * 0-9 and the special characters :;.,?!()ï¿½.
 	 * For MSS, errorCode as defined in section 0
 	 * can be set in the message property in order
 	 * to simulate negative
 	 * (Optional)
 	 */
 	private String message;
+
+	/**
+	 * The social security number of the individual 
+	 * making the payment, should match the 
+	 * registered value for payerAlias or the 
+	 * payment will not be accepted. The value 
+	 * should be a proper Swedish social security 
+	 * number (personnummer or sammordningsnummer). 
+	 * Note: Since MSS is a stand-alone test system 
+	 * it can not verify if payerSSN match 
+	 * registered value for payerAlias. It is 
+	 * possible to simulate an â€˜ssn not matchingâ€™ 
+	 * error, see message property below.
+	 * (Optional)
+	 */
+	private String payerSSN;
+
+	/**
+	 * Minimum age (in years) that the individual 
+	 * connected to the payerAlias has to be in order 
+	 * for the payment to be accepted. Value has to be 
+	 * in the range of 1 to 99. Note: Since MSS is a 
+	 * stand-alone test system it can not verify the 
+	 * payerAlias age against the ageLimit value. It is 
+	 * possible to simulate an â€˜age to lowâ€™ error.
+	 */
+	private String ageLimit;
 
 	public String getPayeePaymentReference() {
 		return payeePaymentReference;
