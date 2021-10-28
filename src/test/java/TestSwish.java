@@ -1,5 +1,4 @@
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -14,12 +13,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import org.junit.Test;
-
-import swish.PaymentRequest;
-import swish.SwishClient;
-import swish.SwishException;
-import swish.SwishPayment;
-import swish.SwishResponseHeaders;
+import org.notima.swish.PaymentRequest;
+import org.notima.swish.SwishClient;
+import org.notima.swish.SwishException;
+import org.notima.swish.SwishPayment;
+import org.notima.swish.SwishResponseHeaders;
 
 public class TestSwish {
 	private static final int E_COMMERCE = 0;
@@ -42,7 +40,7 @@ public class TestSwish {
 		SwishClient client = getTestClient();
 		SwishResponseHeaders response = client.sendPaymentRequest(getTestRequest(E_COMMERCE), SwishClient.generateInstructionUUID());
 		System.out.println(response.getLocation());
-		testCheckStatus(client, response.getLocation());
+		testCheckStatus(client, response.getLocation(), SwishPayment.CREATED);
 	}
 	
 	@Test
@@ -52,13 +50,13 @@ public class TestSwish {
 		SwishResponseHeaders response = client.sendPaymentRequest(getTestRequest(M_COMMERCE), SwishClient.generateInstructionUUID());
 		System.out.println(response.getLocation());
 		System.out.println(response.getPaymentRequestToken());
-		testCheckStatus(client, response.getLocation());
+		testCheckStatus(client, response.getLocation(), SwishPayment.CREATED);
 	}
 	
-	void testCheckStatus(SwishClient client, String url) throws SwishException, UnrecoverableKeyException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, KeyStoreException, IOException {
+	void testCheckStatus(SwishClient client, String url, String expectedStatus) throws SwishException, UnrecoverableKeyException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, KeyStoreException, IOException {
 		SwishPayment payment = client.retrievePayment(url);
 		System.out.println("Status: " + payment.getStatus());
-		assertNotSame("ERROR", payment.getStatus());
+		assertEquals(expectedStatus, payment.getStatus());
 	}
 
 	SwishClient getTestClient() throws UnrecoverableKeyException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, KeyStoreException, SwishException, IOException {
