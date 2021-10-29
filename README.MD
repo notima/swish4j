@@ -2,9 +2,19 @@
 
 Compatible with version 2 of the Swish API.
 
-## Usage
+## Prerequisites
 
-### Prerequisites
+### Dependencies
+
+The following bundle must be installed in order to start the bundle:
+
+    mvn:com.google.code.gson/gson/2.8.5
+
+The following line must also be added to `etc/jre.properties` following the java version being used:
+
+    sun.net.www.protocol.https
+
+### Preparing certificates
 
 In order to use the Swish client library, a client certificate and a ca certificate needs to be retrieved from swish. Certificates for testing using the Merchant Swish Simulator can be retrieved [here](https://developer.swish.nu/documentation/environments#certificates).
 
@@ -17,6 +27,9 @@ Convert to `der` format:
 Load into java key store:
 
     keytool -import -alias your-alias -keystore Swish_TLS_RootCA.jks -file Swish_TLS_RootCA.der
+
+
+## Usage
 
 ### Instantiating a Swish client
 
