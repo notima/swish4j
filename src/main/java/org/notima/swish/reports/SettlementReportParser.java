@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -30,7 +31,7 @@ public class SettlementReportParser {
     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
     public SettlementReport parseFile (InputStream inStream) throws IOException, ParseException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inStream, "UTF-8"));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inStream, StandardCharsets.ISO_8859_1));
         SettlementReport report = new SettlementReport();
         report.setRows(new ArrayList<SettlementReportRow>());
         reader.readLine();
