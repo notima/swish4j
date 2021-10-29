@@ -129,4 +129,42 @@
   </build>
   
   
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>https://www.apache.org/licenses/LICENSE-2.0.html</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<url>https://github.com/notima/businessobjects</url>
+	<organization>
+		<name>Notima System Integration AB</name>
+		<url>https://github.com/notima</url>
+	</organization>
+	<scm>
+		<url>https://github.com/notima/swish4j</url>
+		<connection>scm:git:git://github.com/notima/swish4j.git</connection>
+		<developerConnection>scm:git:https://github.com:notima/swish4j.git</developerConnection>
+	</scm>
+	<issueManagement>
+		<url>https://github.com/notima/swish4j/issues</url>
+		<system>GitHub</system>
+	</issueManagement>
+	
+	<developers>
+		<developer>
+			<name>Oliver Norin</name>
+			<email>oliver@notima.se</email>
+			<organization>Notima System Integration AB</organization>
+			<organizationUrl>https://github.com/notima</organizationUrl>
+		</developer>
+		<developer>
+			<name>Daniel Tamm</name>
+			<email>daniel@notima.se</email>
+			<organization>Notima System Integration AB</organization>
+			<organizationUrl>https://github.com/notima</organizationUrl>
+		</developer>
+	</developers>
+  
 </project>
