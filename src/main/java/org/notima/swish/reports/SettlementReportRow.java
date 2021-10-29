@@ -95,7 +95,4 @@ public class SettlementReportRow {
         this.orderReference = orderReference;
     }
 
-    public void setPaymentDate(Date parse) {
-    }
-
 }
