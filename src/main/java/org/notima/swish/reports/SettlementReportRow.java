@@ -12,7 +12,7 @@ public class SettlementReportRow {
     private String senderNumber;
     private String senderName;
     private String message;
-    private float amount;
+    private double amount;
     private String orderReference;
 
     public Date getBookKeepingDate() {
@@ -79,11 +79,11 @@ public class SettlementReportRow {
         this.message = message;
     }
 
-    public float getAmount() {
+    public double getAmount() {
         return amount;
     }
 
-    public void setAmount(float amount) {
+    public void setAmount(double amount) {
         this.amount = amount;
     }
 
