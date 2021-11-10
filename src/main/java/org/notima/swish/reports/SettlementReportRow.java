@@ -14,6 +14,7 @@ public class SettlementReportRow {
     private String message;
     private double amount;
     private String orderReference;
+    private String checkoutOrderId;
 
     public Date getBookKeepingDate() {
         return bookKeepingDate;
@@ -93,6 +94,14 @@ public class SettlementReportRow {
 
     public void setOrderReference(String orderReference) {
         this.orderReference = orderReference;
+    }
+
+    public String getCheckoutOrderId() {
+        return checkoutOrderId;
+    }
+
+    public void setCheckoutOrderId(String checkoutOrderId) {
+        this.checkoutOrderId = checkoutOrderId;
     }
 
 }

@@ -27,10 +27,11 @@ public class SettlementReportParser {
     private static final String K_TIME = "Tid";
     private static final String K_AMOUNT = "Belopp";
     private static final String K_ORDER_REF = "Orderreferens";
+    private static final String K_CHECKOUT_ORDER_ID = "CheckoutOrderId";
 
     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
-    public SettlementReport parseFile (InputStream inStream) throws IOException, ParseException {
+    public SettlementReport parseFile (InputStream inStream) throws IOException, ParseException {        
         BufferedReader reader = new BufferedReader(new InputStreamReader(inStream, StandardCharsets.ISO_8859_1));
         SettlementReport report = new SettlementReport();
         report.setRows(new ArrayList<SettlementReportRow>());
@@ -113,6 +114,9 @@ public class SettlementReportParser {
 
             if(indexMap.get(i).equals(K_ORDER_REF))
                 row.setOrderReference(values[i]);
+
+            if(indexMap.get(i).equals(K_CHECKOUT_ORDER_ID))
+                row.setCheckoutOrderId(values[i]);
         }
         row.setTransactionDate(transactionDate);
         return row;
