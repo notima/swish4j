@@ -12,6 +12,14 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Parses a settlement report.
+ * 
+ * TODO: Use a CSV-library to parse the file.
+ * 
+ * @author Oliver Norin
+ *
+ */
 public class SettlementReportParser {
 
     private static final String K_CLEARING_NR = "Clnr";
@@ -41,9 +49,17 @@ public class SettlementReportParser {
         report.setClearingNumber(getValue(line, K_CLEARING_NR, indexMap));
         report.setAccountNumber(getValue(line, K_ACCOUNT_NR, indexMap));
         while(line != null) {
-            SettlementReportRow row = parseLine(line, indexMap);
-            report.getRows().add(row);
-            line = reader.readLine();
+        	try {
+	            SettlementReportRow row = parseLine(line, indexMap);
+	            report.getRows().add(row);
+	            line = reader.readLine();
+        	} catch (Exception ee) {
+                reader.close();
+                inStream.close();
+                ee.printStackTrace();
+                System.err.println("LINE: " + line);
+                throw ee;
+        	}
         }
         reader.close();
         inStream.close();
@@ -72,8 +88,13 @@ public class SettlementReportParser {
         SettlementReportRow row = new SettlementReportRow();
         String[] values = line.split(",");
         Date transactionDate = new Date();
+        String colName;
         for(int i = 0 ; i < values.length; i++) {
 
+        	colName = indexMap.get(i);
+        	if (colName==null)
+        		continue;
+        	
             if(indexMap.get(i).equals(K_BOOK_KEEPING_DATE))
                 row.setBookKeepingDate(dateFormat.parse(values[i]));
 
@@ -103,10 +124,12 @@ public class SettlementReportParser {
                 row.setMessage(values[i]);
 
             if(indexMap.get(i).equals(K_TIME)) {
-                int hour = Integer.parseInt(values[i].split(":")[0]);
-                int minute = Integer.parseInt(values[i].split(":")[1]);
-                transactionDate.setHours(hour);
-                transactionDate.setMinutes(minute);
+            	try {
+	                int hour = Integer.parseInt(values[i].split(":")[0]);
+	                int minute = Integer.parseInt(values[i].split(":")[1]);
+	                transactionDate.setHours(hour);
+	                transactionDate.setMinutes(minute);
+            	} catch (Exception ee) {}
             }
 
             if(indexMap.get(i).equals(K_AMOUNT))

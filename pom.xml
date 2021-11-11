@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.notima</groupId>
   <artifactId>swish4j</artifactId>
-  <version>0.0.1</version>
+  <version>0.0.2-SNAPSHOT</version>
   <name>Swish Java client</name>
   <packaging>bundle</packaging>
   
@@ -55,13 +55,15 @@
         <configuration>
           <instructions>
             <Export-Package>
+              org.notima.swish,
               org.notima.swish.*
             </Export-Package>
             <Private-Package>
-              org.apache.karaf.util.tracker,
-              org.apache.karaf.util.tracker.annotation,
               org.notima.swish.internal
             </Private-Package>
+            <Import-Package>
+            	*
+            </Import-Package>
           </instructions>
         </configuration>
       </plugin>
