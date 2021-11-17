@@ -9,13 +9,12 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
 
 /**
  * Parses a settlement report.
- * 
- * TODO: Use a CSV-library to parse the file.
  * 
  * @author Oliver Norin
  *
@@ -44,104 +43,38 @@ public class SettlementReportParser {
         SettlementReport report = new SettlementReport();
         report.setRows(new ArrayList<SettlementReportRow>());
         reader.readLine();
-        Map<Integer, String> indexMap = getHeaderIndicies(reader.readLine());
-        String line = reader.readLine();
-        report.setClearingNumber(getValue(line, K_CLEARING_NR, indexMap));
-        report.setAccountNumber(getValue(line, K_ACCOUNT_NR, indexMap));
-        while(line != null) {
-        	try {
-	            SettlementReportRow row = parseLine(line, indexMap);
-	            report.getRows().add(row);
-	            line = reader.readLine();
-        	} catch (Exception ee) {
-                reader.close();
-                inStream.close();
-                ee.printStackTrace();
-                System.err.println("LINE: " + line);
-                throw ee;
-        	}
+        Iterable<CSVRecord> records = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(reader);
+        for (CSVRecord record : records) {
+            report.getRows().add(parseRecord(record));
+            report.setAccountNumber(record.get(K_ACCOUNT_NR));
+            report.setClearingNumber(record.get(K_CLEARING_NR));
         }
         reader.close();
         inStream.close();
         return report;
     }
 
-    private String getValue(String line, String header, Map<Integer, String> indexMap) {
-        String[] values = line.split(",");
-        for(int i = 0 ; i < values.length; i++) {
-            if(indexMap.get(i).equals(header))
-                return values[i];
-        }
-        return null;
-    }
-
-    private Map<Integer, String> getHeaderIndicies(String headerLine) {
-        Map<Integer, String> indexMap = new HashMap<Integer, String>();
-        String[] headers = headerLine.split(",");
-        for(int i = 0; i < headers.length; i++) {
-            indexMap.put(i, headers[i]);
-        }
-        return indexMap;
-    }
-
-    private SettlementReportRow parseLine(String line, Map<Integer, String> indexMap) throws ParseException {
+    private SettlementReportRow parseRecord(CSVRecord record) throws ParseException {
         SettlementReportRow row = new SettlementReportRow();
-        String[] values = line.split(",");
-        Date transactionDate = new Date();
-        String colName;
-        for(int i = 0 ; i < values.length; i++) {
-
-        	colName = indexMap.get(i);
-        	if (colName==null)
-        		continue;
-        	
-            if(indexMap.get(i).equals(K_BOOK_KEEPING_DATE))
-                row.setBookKeepingDate(dateFormat.parse(values[i]));
-
-            if(indexMap.get(i).equals(K_TRANSACTION_DATE)) {
-                Date date = dateFormat.parse(values[i]);
-                transactionDate.setYear(date.getYear());
-                transactionDate.setMonth(date.getMonth());
-                transactionDate.setDate(date.getDate());
-            }
-
-            if(indexMap.get(i).equals(K_CURRENCY_DATE))
-                row.setCurrencyDate(dateFormat.parse(values[i]));
-
-            if(indexMap.get(i).equals(K_RECIPIENT_NR))
-                row.setRecipientNumber(values[i]);
-
-            if(indexMap.get(i).equals(K_RECIPIENT_NAME))
-                row.setRecipientName(values[i]);
-
-            if(indexMap.get(i).equals(K_SENDER_NR))
-                row.setSenderNumber(values[i]);
-
-            if(indexMap.get(i).equals(K_SENDER_NAME))
-                row.setSenderName(values[i]);
-
-            if(indexMap.get(i).equals(K_MESSAGE))
-                row.setMessage(values[i]);
-
-            if(indexMap.get(i).equals(K_TIME)) {
-            	try {
-	                int hour = Integer.parseInt(values[i].split(":")[0]);
-	                int minute = Integer.parseInt(values[i].split(":")[1]);
-	                transactionDate.setHours(hour);
-	                transactionDate.setMinutes(minute);
-            	} catch (Exception ee) {}
-            }
-
-            if(indexMap.get(i).equals(K_AMOUNT))
-                row.setAmount(Float.parseFloat(values[i]));
-
-            if(indexMap.get(i).equals(K_ORDER_REF))
-                row.setOrderReference(values[i]);
-
-            if(indexMap.get(i).equals(K_CHECKOUT_ORDER_ID))
-                row.setCheckoutOrderId(values[i]);
-        }
+        row.setBookKeepingDate(dateFormat.parse(record.get(K_BOOK_KEEPING_DATE)));
+        Date transactionDate = dateFormat.parse(record.get(K_TRANSACTION_DATE));
+        String transactionTimeStr = record.get(K_TIME);
+        System.out.println(transactionTimeStr);
+        int hour = Integer.parseInt(transactionTimeStr.split(":")[0]);
+        int minute = Integer.parseInt(transactionTimeStr.split(":")[1]);
+        transactionDate.setHours(hour);
+        transactionDate.setMinutes(minute);
         row.setTransactionDate(transactionDate);
+        row.setCurrencyDate(dateFormat.parse(record.get(K_CURRENCY_DATE)));
+        row.setRecipientNumber(record.get(K_RECIPIENT_NR));
+        row.setRecipientName(record.get(K_RECIPIENT_NAME));
+        row.setSenderNumber(record.get(K_SENDER_NR));
+        row.setSenderName(record.get(K_SENDER_NAME));
+        row.setMessage(record.get(K_MESSAGE));
+        row.setAmount(Float.parseFloat(record.get(K_AMOUNT)));
+        row.setOrderReference(record.get(K_ORDER_REF));
+        if(record.isMapped(K_CHECKOUT_ORDER_ID))
+            row.setCheckoutOrderId(record.get(K_CHECKOUT_ORDER_ID));
         return row;
     }
 }

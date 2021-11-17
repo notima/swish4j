@@ -4,9 +4,6 @@ import static org.junit.Assert.assertEquals;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.charset.spi.CharsetProvider;
 import java.text.ParseException;
 
 import org.junit.Test;
