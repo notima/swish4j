@@ -59,7 +59,6 @@ public class SettlementReportParser {
         row.setBookKeepingDate(dateFormat.parse(record.get(K_BOOK_KEEPING_DATE)));
         Date transactionDate = dateFormat.parse(record.get(K_TRANSACTION_DATE));
         String transactionTimeStr = record.get(K_TIME);
-        System.out.println(transactionTimeStr);
         int hour = Integer.parseInt(transactionTimeStr.split(":")[0]);
         int minute = Integer.parseInt(transactionTimeStr.split(":")[1]);
         transactionDate.setHours(hour);
