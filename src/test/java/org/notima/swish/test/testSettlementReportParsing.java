@@ -15,14 +15,19 @@ public class testSettlementReportParsing {
     
     @Test
     public void testParseSettlementReport() throws IOException, ParseException {
-        File reportFile = new File("src/test/resources/Swishrapport.csv");
-        FileInputStream reportInputStream = new FileInputStream(reportFile);
-        SettlementReport report = new SettlementReportParser().parseFile(reportInputStream);
-        reportInputStream.close();
-        assertEquals("54321", report.getClearingNumber());
-        assertEquals("1029384756", report.getAccountNumber());
-        for(SettlementReportRow row : report.getRows()) {
-            System.out.printf("%s,\t%s,\t%s,\t%s,\t%f\t%s\n", row.getSenderName(), row.getSenderNumber(), row.getRecipientName(), row.getRecipientNumber(), row.getAmount(), row.getTransactionDate().toString());
+        File[] reportFiles = {
+            new File("src/test/resources/Swishrapport.csv"),
+            new File("src/test/resources/Handelsbankenrapport1.csv"),
+            new File("src/test/resources/Handelsbankenrapport2.csv")
+        };
+        for(File reportFile : reportFiles) {
+            System.out.println(reportFile.getName());
+            FileInputStream reportInputStream = new FileInputStream(reportFile);
+            SettlementReport report = new SettlementReportParser().parseFile(reportInputStream);
+            reportInputStream.close();
+            for(SettlementReportRow row : report.getRows()) {
+                System.out.printf("%s,\t%s,\t%s,\t%s,\t%f\t%s\n", row.getSenderName(), row.getSenderNumber(), row.getRecipientName(), row.getRecipientNumber(), row.getAmount(), row.getTransactionDate().toString());
+            }
         }
     }
 }
