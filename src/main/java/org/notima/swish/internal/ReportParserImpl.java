@@ -2,13 +2,10 @@ package org.notima.swish.internal;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
@@ -64,7 +61,7 @@ public class ReportParserImpl implements ReportParser {
         row.setSenderNumber(record.get(K_SENDER_NR));
         row.setSenderName(record.get(K_SENDER_NAME));
         row.setMessage(record.get(K_MESSAGE));
-        row.setAmount(Float.parseFloat(record.get(K_AMOUNT)));
+        row.setAmount(Double.parseDouble(record.get(K_AMOUNT)));
         row.setOrderReference(record.get(K_ORDER_REF));
         if(record.isMapped(K_CHECKOUT_ORDER_ID))
             row.setCheckoutOrderId(record.get(K_CHECKOUT_ORDER_ID));
