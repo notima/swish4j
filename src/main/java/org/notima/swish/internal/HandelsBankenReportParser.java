@@ -80,7 +80,11 @@ public class HandelsBankenReportParser implements ReportParser {
     private SettlementReportRow parseRecord(CSVRecord record) throws ParseException {
         SettlementReportRow row = new SettlementReportRow();
         row.setAmount(decimalFormat.parse(record.get(H_AMOUNT)).doubleValue());
-        row.setBookKeepingDate(dateFormat.parse(record.get(H_BOOKING_DATE)));
+        try {
+        	row.setBookKeepingDate(dateFormat.parse(record.get(H_BOOKING_DATE)));
+        } catch (java.text.ParseException pe) {
+        	// For some reason, this can be empty
+        }
         row.setCheckoutOrderId(record.get(H_ORDER_ID));
         row.setMessage(record.get(H_NOTIFICATION));
         row.setRecipientName(record.get(H_ORG_NO));
