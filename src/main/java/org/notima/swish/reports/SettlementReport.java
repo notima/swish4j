@@ -45,6 +45,38 @@ public class SettlementReport {
     	return rows!=null && !rows.isEmpty();
     }
     
+
+    @Transient
+    public Date getFirstBookkeepingDate() {
+    	if (!hasRows()) return null; 
+
+    	Date firstDate = new Date(Long.MAX_VALUE);
+    	
+    	for (SettlementReportRow r : rows) {
+    		if (r.getBookKeepingDate()!=null && r.getBookKeepingDate().before(firstDate)) {
+    				firstDate = r.getBookKeepingDate();
+    		}
+    	}
+    	
+    	return firstDate;
+    }
+    
+    @Transient
+    public Date getLastBookkeepingDate() {
+    	if (!hasRows()) return null; 
+
+    	Date lastDate = new Date(0);
+    	
+    	for (SettlementReportRow r : rows) {
+    		if (r.getBookKeepingDate()!=null && r.getBookKeepingDate().after(lastDate)) {
+    				lastDate = r.getBookKeepingDate();
+    		}
+    	}
+    	
+    	return lastDate;
+    }
+    
+    
     @Transient
     public Date getFirstTransactionDate() {
     	if (!hasRows()) return null; 
