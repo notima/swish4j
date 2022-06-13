@@ -36,6 +36,9 @@ public class HandelsBankenReportParser implements ReportParser {
 
     private char separator;
 
+    public static final String TRANSACTION_NORMAL = "SWH";
+    public static final String TRANSACTION_REFUND = "SWR";
+    
     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     DecimalFormat decimalFormat = new DecimalFormat("0.#");
 
@@ -79,7 +82,7 @@ public class HandelsBankenReportParser implements ReportParser {
 
     private SettlementReportRow parseRecord(CSVRecord record) throws ParseException {
         SettlementReportRow row = new SettlementReportRow();
-        row.setAmount(decimalFormat.parse(record.get(H_AMOUNT)).doubleValue());
+        checkTransactionTypeAndSetAmount(row, record);
         try {
         	row.setBookKeepingDate(dateFormat.parse(record.get(H_BOOKING_DATE)));
         } catch (java.text.ParseException pe) {
@@ -95,6 +98,17 @@ public class HandelsBankenReportParser implements ReportParser {
         return row;
     }
 
+    private void checkTransactionTypeAndSetAmount(SettlementReportRow row, CSVRecord record) throws ParseException {
+
+    	row.setAmount(decimalFormat.parse(record.get(H_AMOUNT)).doubleValue());
+    	String transactionType = record.get(H_TRANSACTION_TYPE);
+    	if (TRANSACTION_REFUND.equalsIgnoreCase(transactionType)) {
+    		row.setAmount(-row.getAmount());
+    	}
+    	
+    }
+    
+    
     public void setSeparator(char separator) {
         this.separator = separator;
         DecimalFormatSymbols symbols = new DecimalFormatSymbols();
