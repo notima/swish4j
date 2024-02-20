@@ -8,12 +8,8 @@ Compatible with version 2 of the Swish API.
 
 The following bundle must be installed in order to start the bundle:
 
-    mvn:com.google.code.gson/gson/2.8.5
+    mvn:com.google.code.gson/gson/2.8.9
     mvn:org.apache.commons/commons-csv/1.6
-
-The following line must also be added to `etc/jre.properties` following the java version being used:
-
-    sun.net.www.protocol.https
 
 ### Preparing certificates
 

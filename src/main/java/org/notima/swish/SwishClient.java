@@ -99,7 +99,7 @@ public class SwishClient {
 		SwishResponseHeaders responseHeaders = null;
 		URL url;
 		try {
-			url = new URL(null, getBaseUrl() + URL_PAYMENTREQUESTS + instructionUUID, new sun.net.www.protocol.https.Handler());
+			url = new URL(getBaseUrl() + URL_PAYMENTREQUESTS + instructionUUID);
 			String paymentRequestJson = gson.toJson(request);
 			HttpsURLConnection conn = openConnection(url, "PUT");
 			addBodyToConnection(conn, paymentRequestJson);
