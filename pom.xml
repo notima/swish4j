@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.notima</groupId>
   <artifactId>swish4j</artifactId>
-  <version>0.0.4-SNAPSHOT</version>
+  <version>0.0.4</version>
   <name>Swish Java client</name>
   <packaging>bundle</packaging>
   
@@ -81,9 +81,7 @@
 				<configuration>
 					<serverId>ossrh</serverId>
 					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
-					<!-- 
 					<autoReleaseAfterClose>true</autoReleaseAfterClose>
-					 -->
 					<stagingProgressTimeoutMinutes>25</stagingProgressTimeoutMinutes>
 					<keepStagingRepositoryOnCloseRuleFailure>true</keepStagingRepositoryOnCloseRuleFailure>
 					<keepStagingRepositoryOnFailure>true</keepStagingRepositoryOnFailure>
@@ -125,7 +123,7 @@
 				<executions>
 					<execution>
 						<id>sign-artifacts</id>
-						<phase>verify</phase>
+						<phase>deploy</phase>
 						<goals>
 							<goal>sign</goal>
 						</goals>
