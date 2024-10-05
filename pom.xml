@@ -123,7 +123,7 @@
 				<executions>
 					<execution>
 						<id>sign-artifacts</id>
-						<phase>deploy</phase>
+						<phase>verify</phase>
 						<goals>
 							<goal>sign</goal>
 						</goals>
@@ -146,7 +146,7 @@
 
 	<url>https://github.com/notima/businessobjects</url>
 	<organization>
-		<name>Notima System Integration AB</name>
+		<name>Ekonomibolaget Notima AB</name>
 		<url>https://github.com/notima</url>
 	</organization>
 	<scm>
@@ -163,13 +163,13 @@
 		<developer>
 			<name>Oliver Norin</name>
 			<email>oliver@notima.se</email>
-			<organization>Notima System Integration AB</organization>
+			<organization>Ekonomibolaget Notima AB</organization>
 			<organizationUrl>https://github.com/notima</organizationUrl>
 		</developer>
 		<developer>
 			<name>Daniel Tamm</name>
 			<email>daniel@notima.se</email>
-			<organization>Notima System Integration AB</organization>
+			<organization>Ekonomibolaget Notima AB</organization>
 			<organizationUrl>https://github.com/notima</organizationUrl>
 		</developer>
 	</developers>
